@@ -46,14 +46,7 @@ export default new DataSource({
     ? undefined
     : process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_URL ? undefined : process.env.DATABASE_NAME,
-  ssl:
-    String(process.env.DATABASE_SSL ?? 'false') === 'true'
-      ? {
-          rejectUnauthorized:
-            String(process.env.DATABASE_SSL_REJECT_UNAUTHORIZED ?? 'false') ===
-            'true',
-        }
-      : false,
+  ssl: true,
   entities: [
     Profile,
     Skill,
@@ -71,4 +64,9 @@ export default new DataSource({
   ],
   migrations: ['src/database/migrations/*.ts'],
   synchronize: false,
+  extra: {
+    ssl: {
+      rejectUnauthorized: false, // Bypasses self-signed cert validation issues
+    },
+  },
 });
