@@ -18,6 +18,15 @@ export class InitialPortfolioSchema1755840000000 implements MigrationInterface {
       `CREATE TYPE "public"."contact_status_enum" AS ENUM ('NEW', 'READ', 'REPLIED', 'ARCHIVED')`,
     );
     await queryRunner.query(
+      `CREATE TYPE "public"."email_delivery_status_enum" AS ENUM ('PENDING', 'SENT', 'FAILED')`,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."user_role_enum" AS ENUM ('ADMIN')`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "users" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "email" character varying(180) NOT NULL, "passwordHash" character varying(255) NOT NULL, "role" "public"."user_role_enum" NOT NULL DEFAULT 'ADMIN', "isActive" boolean NOT NULL DEFAULT true, "emailVerified" boolean NOT NULL DEFAULT false, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_users_email" UNIQUE ("email"), CONSTRAINT "PK_users" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
       `CREATE TABLE "profiles" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "fullName" character varying(150) NOT NULL, "headline" character varying(200) NOT NULL, "bio" text NOT NULL, "shortBio" text NOT NULL, "profileImage" character varying, "location" character varying(120), "email" character varying(180) NOT NULL, "phone" character varying(40), "resumeUrl" character varying, "availabilityStatus" character varying NOT NULL DEFAULT 'AVAILABLE', CONSTRAINT "UQ_profiles_email" UNIQUE ("email"), CONSTRAINT "PK_profiles" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
@@ -78,6 +87,9 @@ export class InitialPortfolioSchema1755840000000 implements MigrationInterface {
       `CREATE INDEX "IDX_contact_messages_status" ON "contact_messages" ("status")`,
     );
     await queryRunner.query(
+      `ALTER TABLE "contact_messages" ADD "emailStatus" "public"."email_delivery_status_enum" NOT NULL DEFAULT 'PENDING'`,
+    );
+    await queryRunner.query(
       `CREATE INDEX "IDX_contact_messages_createdAt" ON "contact_messages" ("createdAt")`,
     );
     await queryRunner.query(
@@ -110,6 +122,7 @@ export class InitialPortfolioSchema1755840000000 implements MigrationInterface {
       `DROP INDEX "public"."IDX_contact_messages_status"`,
     );
     await queryRunner.query(`DROP TABLE "contact_messages"`);
+    await queryRunner.query(`DROP TYPE "public"."email_delivery_status_enum"`);
     await queryRunner.query(`DROP TABLE "services"`);
     await queryRunner.query(`DROP TABLE "social_links"`);
     await queryRunner.query(`DROP TABLE "certifications"`);
@@ -133,6 +146,8 @@ export class InitialPortfolioSchema1755840000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "skills"`);
     await queryRunner.query(`DROP TABLE "profiles"`);
     await queryRunner.query(`DROP TYPE "public"."contact_status_enum"`);
+    await queryRunner.query(`DROP TABLE "users"`);
+    await queryRunner.query(`DROP TYPE "public"."user_role_enum"`);
     await queryRunner.query(`DROP TYPE "public"."employment_type_enum"`);
     await queryRunner.query(`DROP TYPE "public"."project_status_enum"`);
     await queryRunner.query(`DROP TYPE "public"."skill_category_enum"`);

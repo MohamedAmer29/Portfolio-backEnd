@@ -13,6 +13,7 @@ import { ServiceOffer } from '../services/entities/service.entity';
 import { ContactMessage } from '../contact/entities/contact-message.entity';
 import { Asset } from '../assets/entities/asset.entity';
 import { PortfolioSetting } from '../portfolio-settings/entities/portfolio-setting.entity';
+import { User } from '../users/entities/user.entity';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { PortfolioSetting } from '../portfolio-settings/entities/portfolio-setti
           ContactMessage,
           Asset,
           PortfolioSetting,
+          User,
         ],
         synchronize: false,
       }),

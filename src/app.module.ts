@@ -17,6 +17,10 @@ import { SocialLinksModule } from './social-links/social-links.module';
 import { ServicesModule } from './services/services.module';
 import { ContactModule } from './contact/contact.module';
 import { AssetsModule } from './assets/assets.module';
+import { RedisModule } from './redis/redis.module';
+import { EmailModule } from './email/email.module';
+import { HealthModule } from './health/health.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -39,6 +43,10 @@ import { AssetsModule } from './assets/assets.module';
     ServicesModule,
     ContactModule,
     AssetsModule,
+    RedisModule,
+    EmailModule,
+    HealthModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

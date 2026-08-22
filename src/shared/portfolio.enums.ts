@@ -29,3 +29,9 @@ export enum ContactStatus {
   REPLIED = 'REPLIED',
   ARCHIVED = 'ARCHIVED',
 }
+
+export enum EmailDeliveryStatus {
+  PENDING = 'PENDING',
+  SENT = 'SENT',
+  FAILED = 'FAILED',
+}

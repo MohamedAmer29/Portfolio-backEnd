@@ -10,11 +10,13 @@ import { Education } from '../education/entities/education.entity';
 import { Certification } from '../certifications/entities/certification.entity';
 import { SocialLink } from '../social-links/entities/social-link.entity';
 import { ServiceOffer } from '../services/entities/service.entity';
+import { User, UserRole } from '../users/entities/user.entity';
 import {
   SkillCategory,
   ProjectStatus,
   EmploymentType,
 } from '../shared/portfolio.enums';
+import { AuthService } from '../auth/auth.service';
 
 config();
 
@@ -29,6 +31,8 @@ async function seed() {
   const certRepo = dataSource.getRepository(Certification);
   const socialRepo = dataSource.getRepository(SocialLink);
   const serviceRepo = dataSource.getRepository(ServiceOffer);
+  const userRepo = dataSource.getRepository(User);
+  const authService = new AuthService(userRepo);
 
   const profile =
     (await profileRepo.findOneBy({ email: 'developer@example.com' })) ??
@@ -61,10 +65,16 @@ async function seed() {
       isFeatured: true,
     },
   ]);
-  const [react, nest] = await techRepo.save([
-    { name: 'React', category: 'Frontend' },
-    { name: 'NestJS', category: 'Backend' },
-  ]);
+  const react =
+    (await techRepo.findOneBy({ name: 'React' })) ??
+    (await techRepo.save(
+      techRepo.create({ name: 'React', category: 'Frontend' }),
+    ));
+  const nest =
+    (await techRepo.findOneBy({ name: 'NestJS' })) ??
+    (await techRepo.save(
+      techRepo.create({ name: 'NestJS', category: 'Backend' }),
+    ));
   const project = await projectRepo.save(
     projectRepo.create({
       title: 'Portfolio Platform',
@@ -111,6 +121,23 @@ async function seed() {
     displayOrder: 1,
     isFeatured: true,
   });
+
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (adminEmail && adminPassword) {
+    const existingAdmin = await userRepo.findOneBy({ email: adminEmail });
+    if (!existingAdmin) {
+      await userRepo.save(
+        userRepo.create({
+          email: adminEmail,
+          passwordHash: authService.hashPassword(adminPassword),
+          role: UserRole.ADMIN,
+          isActive: true,
+          emailVerified: true,
+        }),
+      );
+    }
+  }
 
   console.log(`Seeded portfolio data with project ${project.slug}`);
   await dataSource.destroy();

@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import type { Request } from 'express';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -13,6 +14,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
+    const request = ctx.getRequest<Request & { url?: string }>();
     const response = ctx.getResponse();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -26,14 +28,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
         : (body?.message ?? message);
     } else if (exception instanceof Error) {
       this.logger.error(exception.message, exception.stack);
+      if (process.env.NODE_ENV !== 'production') {
+        message = exception.message;
+      }
     }
 
     response.status(status).json({
       success: false,
       statusCode: status,
       message,
-      errorCode: 'PORTFOLIO_DATA_ERROR',
+      errorCode:
+        exception instanceof HttpException ? 'HTTP_ERROR' : 'INTERNAL_ERROR',
       timestamp: new Date().toISOString(),
+      path: request?.url ?? '',
     });
   }
 }
