@@ -30,4 +30,8 @@ async function bootstrap() {
   }
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+
+// For local development only
+if (require.main === module) {
+  bootstrap();
+}
