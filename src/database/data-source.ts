@@ -15,6 +15,7 @@ import { ContactMessage } from '../contact/entities/contact-message.entity';
 import { Asset } from '../assets/entities/asset.entity';
 import { PortfolioSetting } from '../portfolio-settings/entities/portfolio-setting.entity';
 import { User } from '../users/entities/user.entity';
+import * as pg from 'pg';
 
 config();
 validateEnv(process.env);
@@ -63,6 +64,7 @@ export default new DataSource({
     User,
   ],
   migrations: ['src/database/migrations/*.ts'],
+  driver: pg,
   synchronize: false,
   extra: {
     max: 1, // 👈 Restrict pool size per lambda instance
