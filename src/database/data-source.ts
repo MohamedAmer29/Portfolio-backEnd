@@ -65,6 +65,8 @@ export default new DataSource({
   migrations: ['src/database/migrations/*.ts'],
   synchronize: false,
   extra: {
+    max: 1, // 👈 Restrict pool size per lambda instance
+    connectionTimeoutMillis: 5000,
     ssl: {
       rejectUnauthorized: false, // Bypasses self-signed cert validation issues
     },
