@@ -7,6 +7,8 @@ import cookieParser from 'cookie-parser';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 
+let cachedServer: express.Express;
+
 async function createNestApp(server?: express.Express) {
   const app = server
     ? await NestFactory.create(AppModule, new ExpressAdapter(server))
@@ -43,9 +45,17 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 
+async function getServer() {
+  if (!cachedServer) {
+    const server = express();
+    await createNestApp(server);
+    cachedServer = server;
+  }
+  return cachedServer;
+}
+
 export default async function handler(req: unknown, res: unknown) {
-  const server = express();
-  const app = await createNestApp(server);
+  const server = await getServer();
   return server(req as never, res as never);
 }
 
