@@ -29,7 +29,6 @@ async function createNestApp(server?: express.Express) {
       .setTitle('Developer Portfolio API')
       .setDescription('REST API for my developer portfolio')
       .setVersion('1.0')
-      .addCookieAuth('access_token')
       .addBearerAuth()
       .build();
     const document = SwaggerModule.createDocument(app, config);
