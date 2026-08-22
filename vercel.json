@@ -3,7 +3,7 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install --production=false",
   "functions": {
-    "src/main.ts": {
+    "src/index.ts": {
       "maxDuration": 15
     }
   },
