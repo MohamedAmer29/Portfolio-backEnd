@@ -13,6 +13,7 @@ type RedisClient = {
   expire(key: string, seconds: number): Promise<number>;
   ping(): Promise<string>;
   disconnect(): void;
+  on(event: string, listener: (...args: unknown[]) => void): void;
 };
 
 @Injectable()
@@ -29,6 +30,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         password?: string;
         lazyConnect?: boolean;
         maxRetriesPerRequest?: number;
+        retryStrategy?: (times: number) => number | null;
       }) => RedisClient;
 
       this.client = new Redis({
@@ -36,7 +38,27 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         port: Number(process.env.REDIS_PORT ?? 6379),
         password: process.env.REDIS_PASSWORD || undefined,
         lazyConnect: true,
-        maxRetriesPerRequest: 2,
+        maxRetriesPerRequest: undefined,
+        retryStrategy: (times) => {
+          if (times > 3) {
+            this.logger.warn('Redis connection failed after 3 retries');
+            return null;
+          }
+          return Math.min(times * 100, 3000);
+        },
+      });
+
+      // Handle error events to prevent unhandled error crashes
+      this.client.on('error', (error) => {
+        if (this.enabled) {
+          this.logger.warn(`Redis error: ${this.describeError(error)}`);
+        }
+      });
+
+      this.client.on('close', () => {
+        if (this.enabled) {
+          this.logger.warn('Redis connection closed');
+        }
       });
 
       await this.client.ping();
