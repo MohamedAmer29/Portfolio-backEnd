@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import pg from 'pg';
 import { Profile } from '../profile/entities/profile.entity';
 import { Skill } from '../skills/entities/skill.entity';
 import { Project } from '../projects/entities/project.entity';
@@ -36,6 +37,7 @@ import { User } from '../users/entities/user.entity';
 
         return {
           type: 'postgres',
+          driver: pg,
           url: databaseUrl ?? undefined,
           host: databaseUrl
             ? undefined
