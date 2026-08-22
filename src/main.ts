@@ -33,7 +33,16 @@ async function createNestApp(server?: express.Express) {
       .addBearerAuth()
       .build();
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup(swaggerPath, app, document);
+    SwaggerModule.setup(swaggerPath, app, document, {
+      customJs: [
+        'https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js',
+        'https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js',
+      ],
+      customCssUrl: [
+        'https://unpkg.com/swagger-ui-dist@5/swagger-ui.css',
+      ],
+      customfavIcon: 'https://unpkg.com/swagger-ui-dist@5/favicon-32x32.png',
+    });
   }
 
   await app.init();
