@@ -31,6 +31,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         lazyConnect?: boolean;
         maxRetriesPerRequest?: number;
         retryStrategy?: (times: number) => number | null;
+        tls?: boolean;
       }) => RedisClient;
 
       this.client = new Redis({
@@ -39,6 +40,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         password: process.env.REDIS_PASSWORD || undefined,
         lazyConnect: true,
         maxRetriesPerRequest: undefined,
+        tls: process.env.REDIS_TLS === 'true',
         retryStrategy: (times) => {
           if (times > 3) {
             this.logger.warn('Redis connection failed after 3 retries');
