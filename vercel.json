@@ -1,11 +1,11 @@
 {
+  "version": 2,
   "buildCommand": "npm run build",
   "installCommand": "npm install --production=false",
-  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/dist/main.js"
+      "destination": "/api/index.js"
     }
   ]
 }
