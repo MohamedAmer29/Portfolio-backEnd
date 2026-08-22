@@ -19,13 +19,32 @@ import { User } from '../users/entities/user.entity';
 config();
 validateEnv(process.env);
 
+const databaseUrl = process.env.DATABASE_URL;
+const databaseHost = process.env.DATABASE_HOST;
+
+if (databaseUrl) {
+  console.log('  PostgreSQL: Using DATABASE_URL (Neon cloud database)');
+} else if (databaseHost) {
+  console.log(
+    `  PostgreSQL: Using individual credentials - Host: ${databaseHost}`,
+  );
+} else {
+  console.log('  PostgreSQL: No connection configured');
+}
+
 export default new DataSource({
   type: 'postgres',
   url: process.env.DATABASE_URL || undefined,
   host: process.env.DATABASE_URL ? undefined : process.env.DATABASE_HOST,
-  port: process.env.DATABASE_URL ? undefined : Number(process.env.DATABASE_PORT),
-  username: process.env.DATABASE_URL ? undefined : process.env.DATABASE_USERNAME,
-  password: process.env.DATABASE_URL ? undefined : process.env.DATABASE_PASSWORD,
+  port: process.env.DATABASE_URL
+    ? undefined
+    : Number(process.env.DATABASE_PORT),
+  username: process.env.DATABASE_URL
+    ? undefined
+    : process.env.DATABASE_USERNAME,
+  password: process.env.DATABASE_URL
+    ? undefined
+    : process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_URL ? undefined : process.env.DATABASE_NAME,
   ssl:
     String(process.env.DATABASE_SSL ?? 'false') === 'true'

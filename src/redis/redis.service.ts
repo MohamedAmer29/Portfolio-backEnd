@@ -36,7 +36,20 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         tls?: Record<string, unknown> | boolean;
       }) => RedisClient;
 
-      const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL;
+      const redisUrl =
+        process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL;
+
+      if (redisUrl) {
+        console.log(
+          '  Redis: Using UPSTASH_REDIS_REST_URL (Upstash cloud Redis)',
+        );
+      } else {
+        const redisHost = process.env.REDIS_HOST ?? 'localhost';
+        console.log(
+          `  Redis: Using individual credentials - Host: ${redisHost}`,
+        );
+      }
+
       this.client = redisUrl
         ? new Redis({
             url: redisUrl,

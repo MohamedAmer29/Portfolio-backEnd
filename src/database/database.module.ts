@@ -18,53 +18,68 @@ import { User } from '../users/entities/user.entity';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: (config: ConfigService) => ({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const databaseUrl = config.get<string>('DATABASE_URL');
+        const databaseHost = config.get<string>('DATABASE_HOST');
+
+        if (databaseUrl) {
+          console.log('  PostgreSQL: Using DATABASE_URL (Neon cloud database)');
+        } else if (databaseHost) {
+          console.log(
+            `  PostgreSQL: Using individual credentials - Host: ${databaseHost}`,
+          );
+        } else {
+          console.log('  PostgreSQL: No connection configured');
+        }
+
+        return {
           type: 'postgres',
-        url: config.get<string>('DATABASE_URL') ?? undefined,
-        host: config.get<string>('DATABASE_URL')
-          ? undefined
-          : config.getOrThrow<string>('DATABASE_HOST'),
-        port: config.get<string>('DATABASE_URL')
-          ? undefined
-          : Number(config.getOrThrow<string>('DATABASE_PORT')),
-        username: config.get<string>('DATABASE_URL')
-          ? undefined
-          : config.getOrThrow<string>('DATABASE_USERNAME'),
-        password: config.get<string>('DATABASE_URL')
-          ? undefined
-          : config.getOrThrow<string>('DATABASE_PASSWORD'),
-        database: config.get<string>('DATABASE_URL')
-          ? undefined
-          : config.getOrThrow<string>('DATABASE_NAME'),
-        ssl:
-          String(config.get<string>('DATABASE_SSL') ?? 'false') === 'true'
-            ? {
-                rejectUnauthorized:
-                  String(
-                    config.get<string>('DATABASE_SSL_REJECT_UNAUTHORIZED') ??
-                      'false',
-                  ) === 'true',
-              }
-            : false,
-        entities: [
-          Profile,
-          Skill,
-          Project,
-          Technology,
-          Experience,
-          Education,
-          Certification,
-          SocialLink,
-          ServiceOffer,
-          ContactMessage,
-          Asset,
-          PortfolioSetting,
-          User,
-        ],
-        synchronize: true,
-      }),
+          url: databaseUrl ?? undefined,
+          host: databaseUrl
+            ? undefined
+            : config.getOrThrow<string>('DATABASE_HOST'),
+          port: databaseUrl
+            ? undefined
+            : Number(config.getOrThrow<string>('DATABASE_PORT')),
+          username: databaseUrl
+            ? undefined
+            : config.getOrThrow<string>('DATABASE_USERNAME'),
+          password: databaseUrl
+            ? undefined
+            : config.getOrThrow<string>('DATABASE_PASSWORD'),
+          database: databaseUrl
+            ? undefined
+            : config.getOrThrow<string>('DATABASE_NAME'),
+          ssl:
+            String(config.get<string>('DATABASE_SSL') ?? 'false') === 'true'
+              ? {
+                  rejectUnauthorized:
+                    String(
+                      config.get<string>('DATABASE_SSL_REJECT_UNAUTHORIZED') ??
+                        'false',
+                    ) === 'true',
+                }
+              : false,
+          entities: [
+            Profile,
+            Skill,
+            Project,
+            Technology,
+            Experience,
+            Education,
+            Certification,
+            SocialLink,
+            ServiceOffer,
+            ContactMessage,
+            Asset,
+            PortfolioSetting,
+            User,
+          ],
+          synchronize: true,
+        };
+      },
     }),
   ],
 })
