@@ -25,30 +25,46 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     try {
       const Redis = require('ioredis') as new (options: {
-        host: string;
-        port: number;
+        host?: string;
+        port?: number;
         password?: string;
+        username?: string;
+        url?: string;
         lazyConnect?: boolean;
         maxRetriesPerRequest?: number;
         retryStrategy?: (times: number) => number | null;
-        tls?: boolean;
+        tls?: Record<string, unknown> | boolean;
       }) => RedisClient;
 
-      this.client = new Redis({
-        host: process.env.REDIS_HOST ?? 'localhost',
-        port: Number(process.env.REDIS_PORT ?? 6379),
-        password: process.env.REDIS_PASSWORD || undefined,
-        lazyConnect: true,
-        maxRetriesPerRequest: undefined,
-        tls: process.env.REDIS_TLS === 'true',
-        retryStrategy: (times) => {
-          if (times > 3) {
-            this.logger.warn('Redis connection failed after 3 retries');
-            return null;
-          }
-          return Math.min(times * 100, 3000);
-        },
-      });
+      const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL;
+      this.client = redisUrl
+        ? new Redis({
+            url: redisUrl,
+            lazyConnect: true,
+            maxRetriesPerRequest: undefined,
+            retryStrategy: (times) => {
+              if (times > 3) {
+                this.logger.warn('Redis connection failed after 3 retries');
+                return null;
+              }
+              return Math.min(times * 100, 3000);
+            },
+          })
+        : new Redis({
+            host: process.env.REDIS_HOST ?? 'localhost',
+            port: Number(process.env.REDIS_PORT ?? 6379),
+            password: process.env.REDIS_PASSWORD || undefined,
+            lazyConnect: true,
+            maxRetriesPerRequest: undefined,
+            tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+            retryStrategy: (times) => {
+              if (times > 3) {
+                this.logger.warn('Redis connection failed after 3 retries');
+                return null;
+              }
+              return Math.min(times * 100, 3000);
+            },
+          });
 
       // Handle error events to prevent unhandled error crashes
       this.client.on('error', (error) => {

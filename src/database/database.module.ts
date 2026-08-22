@@ -18,15 +18,26 @@ import { User } from '../users/entities/user.entity';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.getOrThrow<string>('DATABASE_HOST'),
-        port: Number(config.getOrThrow<string>('DATABASE_PORT')),
-        username: config.getOrThrow<string>('DATABASE_USERNAME'),
-        password: config.getOrThrow<string>('DATABASE_PASSWORD'),
-        database: config.getOrThrow<string>('DATABASE_NAME'),
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          type: 'postgres',
+        url: config.get<string>('DATABASE_URL') ?? undefined,
+        host: config.get<string>('DATABASE_URL')
+          ? undefined
+          : config.getOrThrow<string>('DATABASE_HOST'),
+        port: config.get<string>('DATABASE_URL')
+          ? undefined
+          : Number(config.getOrThrow<string>('DATABASE_PORT')),
+        username: config.get<string>('DATABASE_URL')
+          ? undefined
+          : config.getOrThrow<string>('DATABASE_USERNAME'),
+        password: config.get<string>('DATABASE_URL')
+          ? undefined
+          : config.getOrThrow<string>('DATABASE_PASSWORD'),
+        database: config.get<string>('DATABASE_URL')
+          ? undefined
+          : config.getOrThrow<string>('DATABASE_NAME'),
         ssl:
           String(config.get<string>('DATABASE_SSL') ?? 'false') === 'true'
             ? {
