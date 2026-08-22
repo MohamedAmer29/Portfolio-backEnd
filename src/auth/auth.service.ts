@@ -92,7 +92,7 @@ export class AuthService {
       JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
     ).toString('base64url');
     const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
-    const secret = process.env.JWT_SECRET ?? 'dev-secret';
+    const secret = process.env.JWT_ACCESS_SECRET ?? 'dev-secret';
     const sig = createHmac('sha256', secret)
       .update(`${header}.${body}`)
       .digest('base64url');
@@ -102,7 +102,7 @@ export class AuthService {
   verifyToken(token: string): TokenPayload {
     const [header, body, sig] = token.split('.');
     if (!header || !body || !sig) throw new UnauthorizedException();
-    const secret = process.env.JWT_SECRET ?? 'dev-secret';
+    const secret = process.env.JWT_ACCESS_SECRET ?? 'dev-secret';
     const expected = createHmac('sha256', secret)
       .update(`${header}.${body}`)
       .digest('base64url');

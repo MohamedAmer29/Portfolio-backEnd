@@ -26,6 +26,14 @@ export default new DataSource({
   username: process.env.DATABASE_USERNAME,
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_NAME,
+  ssl:
+    String(process.env.DATABASE_SSL ?? 'false') === 'true'
+      ? {
+          rejectUnauthorized:
+            String(process.env.DATABASE_SSL_REJECT_UNAUTHORIZED ?? 'false') ===
+            'true',
+        }
+      : false,
   entities: [
     Profile,
     Skill,

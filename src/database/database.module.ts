@@ -27,6 +27,16 @@ import { User } from '../users/entities/user.entity';
         username: config.getOrThrow<string>('DATABASE_USERNAME'),
         password: config.getOrThrow<string>('DATABASE_PASSWORD'),
         database: config.getOrThrow<string>('DATABASE_NAME'),
+        ssl:
+          String(config.get<string>('DATABASE_SSL') ?? 'false') === 'true'
+            ? {
+                rejectUnauthorized:
+                  String(
+                    config.get<string>('DATABASE_SSL_REJECT_UNAUTHORIZED') ??
+                      'false',
+                  ) === 'true',
+              }
+            : false,
         entities: [
           Profile,
           Skill,
@@ -42,7 +52,7 @@ import { User } from '../users/entities/user.entity';
           PortfolioSetting,
           User,
         ],
-        synchronize: false,
+        synchronize: true,
       }),
     }),
   ],
