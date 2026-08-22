@@ -8,7 +8,28 @@ import { Repository } from 'typeorm';
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 import { User, UserRole } from '../users/entities/user.entity';
 
-type TokenPayload = { sub: string; role: UserRole; exp: number };
+type AccessTokenClaims = {
+  sub: string;
+  role: UserRole;
+  exp: number;
+  type: 'access';
+  tokenVersion: number;
+};
+
+type RefreshTokenClaims = {
+  sub: string;
+  role: UserRole;
+  exp: number;
+  type: 'refresh';
+  sessionId: string;
+  tokenVersion: number;
+};
+
+export type AuthPrincipal = {
+  sub: string;
+  role: UserRole;
+  tokenVersion: number;
+};
 
 @Injectable()
 export class AuthService {
@@ -38,17 +59,46 @@ export class AuthService {
     ) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return {
-      accessToken: this.signToken({
+    if (
+      user.currentRefreshTokenExpiresAt &&
+      user.currentRefreshTokenExpiresAt.getTime() > Date.now()
+    ) {
+      throw new ForbiddenException(
+        'Already logged in. Please logout before logging in again.',
+      );
+    }
+
+    const sessionId = randomBytes(16).toString('hex');
+    user.currentRefreshTokenId = sessionId;
+    user.currentRefreshTokenExpiresAt = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000,
+    );
+    await this.users.save(user);
+
+    const accessToken = this.signToken(
+      {
         sub: user.id,
         role: user.role,
         exp: Date.now() + 15 * 60 * 1000,
-      }),
-      refreshToken: this.signToken({
+        type: 'access',
+        tokenVersion: user.tokenVersion,
+      },
+      this.accessSecret,
+    );
+    const refreshToken = this.signToken(
+      {
         sub: user.id,
         role: user.role,
         exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
-      }),
+        type: 'refresh',
+        sessionId,
+        tokenVersion: user.tokenVersion,
+      },
+      this.refreshSecret,
+    );
+    return {
+      accessToken,
+      refreshToken,
       user: { id: user.id, email: user.email, role: user.role },
     };
   }
@@ -87,30 +137,136 @@ export class AuthService {
     return timingSafeEqual(expected, next);
   }
 
-  signToken(payload: TokenPayload) {
+  private get accessSecret(): string {
+    return process.env.JWT_ACCESS_SECRET ?? 'dev-secret';
+  }
+
+  private get refreshSecret(): string {
+    return (
+      process.env.JWT_REFRESH_SECRET ??
+      process.env.JWT_ACCESS_SECRET ??
+      'dev-refresh-secret'
+    );
+  }
+
+  signToken(payload: Record<string, unknown>, secret: string): string {
     const header = Buffer.from(
       JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
     ).toString('base64url');
     const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
-    const secret = process.env.JWT_ACCESS_SECRET ?? 'dev-secret';
     const sig = createHmac('sha256', secret)
       .update(`${header}.${body}`)
       .digest('base64url');
     return `${header}.${body}.${sig}`;
   }
 
-  verifyToken(token: string): TokenPayload {
+  private verifySignature(token: string, secret: string): Record<string, any> {
     const [header, body, sig] = token.split('.');
     if (!header || !body || !sig) throw new UnauthorizedException();
-    const secret = process.env.JWT_ACCESS_SECRET ?? 'dev-secret';
     const expected = createHmac('sha256', secret)
       .update(`${header}.${body}`)
       .digest('base64url');
-    if (expected !== sig) throw new UnauthorizedException();
+    if (expected !== sig) throw new UnauthorizedException('Invalid token');
     const payload = JSON.parse(
       Buffer.from(body, 'base64url').toString('utf8'),
-    ) as TokenPayload;
-    if (payload.exp < Date.now()) throw new UnauthorizedException();
+    ) as Record<string, any>;
+    if (typeof payload.exp === 'number' && payload.exp < Date.now()) {
+      throw new UnauthorizedException('Token expired');
+    }
     return payload;
+  }
+
+  async verifyAccessToken(token: string): Promise<AuthPrincipal> {
+    const payload = this.verifySignature(
+      token,
+      this.accessSecret,
+    ) as AccessTokenClaims;
+    if (payload.type !== 'access') {
+      throw new UnauthorizedException('Invalid token type');
+    }
+    const user = await this.users.findOneBy({ id: payload.sub });
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Account is not active');
+    }
+    if (user.tokenVersion !== payload.tokenVersion) {
+      throw new UnauthorizedException('Session expired, please log in again');
+    }
+    return { sub: user.id, role: user.role, tokenVersion: user.tokenVersion };
+  }
+
+  async verifyRefreshToken(token: string) {
+    const payload = this.verifySignature(
+      token,
+      this.refreshSecret,
+    ) as RefreshTokenClaims;
+    if (payload.type !== 'refresh') {
+      throw new UnauthorizedException('Invalid token type');
+    }
+    const user = await this.users.findOneBy({ id: payload.sub });
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Account is not active');
+    }
+    if (user.tokenVersion !== payload.tokenVersion) {
+      throw new UnauthorizedException('Session expired, please log in again');
+    }
+    return {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      sessionId: payload.sessionId,
+      tokenVersion: user.tokenVersion,
+    };
+  }
+
+  async refresh(userId: string, role: UserRole) {
+    const user = await this.users.findOneBy({ id: userId });
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Account is not active');
+    }
+    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+
+    const sessionId = randomBytes(16).toString('hex');
+    user.currentRefreshTokenId = sessionId;
+    user.currentRefreshTokenExpiresAt = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000,
+    );
+    await this.users.save(user);
+
+    const accessToken = this.signToken(
+      {
+        sub: user.id,
+        role: user.role,
+        exp: Date.now() + 15 * 60 * 1000,
+        type: 'access',
+        tokenVersion: user.tokenVersion,
+      },
+      this.accessSecret,
+    );
+    const refreshToken = this.signToken(
+      {
+        sub: user.id,
+        role: user.role,
+        exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
+        type: 'refresh',
+        sessionId,
+        tokenVersion: user.tokenVersion,
+      },
+      this.refreshSecret,
+    );
+    return { accessToken, refreshToken };
+  }
+
+  async logout(userId: string): Promise<{ success: boolean }> {
+    const user = await this.users.findOneBy({ id: userId });
+    if (!user) throw new UnauthorizedException();
+    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+    user.currentRefreshTokenId = null;
+    user.currentRefreshTokenExpiresAt = null;
+    await this.users.save(user);
+    return { success: true };
+  }
+
+  async verifyToken(token: string): Promise<AuthPrincipal> {
+    return this.verifyAccessToken(token);
   }
 }

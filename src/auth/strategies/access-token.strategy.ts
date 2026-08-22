@@ -22,7 +22,7 @@ export class AccessTokenStrategy extends PassportStrategy(
           return typeof token === 'string' ? token : null;
         },
       ]),
-      secretOrKey: process.env.JWT_ACCESS_SECRET as string,
+      secretOrKey: process.env.JWT_ACCESS_SECRET ?? 'dev-secret',
       ignoreExpiration: false,
     });
   }

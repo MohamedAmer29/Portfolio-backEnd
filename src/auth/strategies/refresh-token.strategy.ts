@@ -22,7 +22,10 @@ export class RefreshTokenStrategy extends PassportStrategy(
           return typeof token === 'string' ? token : null;
         },
       ]),
-      secretOrKey: process.env.JWT_REFRESH_SECRET as string,
+      secretOrKey:
+        process.env.JWT_REFRESH_SECRET ??
+        process.env.JWT_ACCESS_SECRET ??
+        'dev-refresh-secret',
       ignoreExpiration: false,
     });
   }
@@ -37,6 +40,12 @@ export class RefreshTokenStrategy extends PassportStrategy(
     }
     if (user.tokenVersion !== payload.tokenVersion) {
       throw new UnauthorizedException('Session expired, please log in again');
+    }
+    if (
+      user.currentRefreshTokenId &&
+      user.currentRefreshTokenId !== payload.sessionId
+    ) {
+      throw new UnauthorizedException('Refresh token has been revoked');
     }
     return {
       id: user.id,

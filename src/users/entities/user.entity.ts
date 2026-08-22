@@ -35,6 +35,12 @@ export class User {
   @Column({ type: 'int', default: 0 })
   tokenVersion!: number;
 
+  @Column({ type: 'varchar', nullable: true })
+  currentRefreshTokenId!: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  currentRefreshTokenExpiresAt!: Date | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 

@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
-import { ValidationGuard } from './common/guards/validation.guard';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { ExpressAdapter } from '@nestjs/platform-express';
@@ -18,7 +18,13 @@ async function createNestApp(server?: express.Express) {
     credentials: true,
   });
   app.use(cookieParser());
-  app.useGlobalGuards(new ValidationGuard());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
   app.useGlobalFilters(new AllExceptionsFilter());
 
   const swaggerEnabled =
@@ -37,9 +43,7 @@ async function createNestApp(server?: express.Express) {
         'https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js',
         'https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js',
       ],
-      customCssUrl: [
-        'https://unpkg.com/swagger-ui-dist@5/swagger-ui.css',
-      ],
+      customCssUrl: ['https://unpkg.com/swagger-ui-dist@5/swagger-ui.css'],
       customfavIcon: 'https://unpkg.com/swagger-ui-dist@5/favicon-32x32.png',
     });
   }

@@ -1,8 +1,18 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
-import type { Response } from 'express';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { RefreshTokenGuard } from './guards/refresh-token.guard';
+import { UserRole } from '../users/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
@@ -14,10 +24,12 @@ export class AuthController {
     @Body() body: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { accessToken, refreshToken, user } =
-      await this.authService.login(body.email, body.password);
+    const { accessToken, refreshToken, user } = await this.authService.login(
+      body.email,
+      body.password,
+    );
 
-    res.cookie('refreshToken', refreshToken, {
+    res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
@@ -26,6 +38,45 @@ export class AuthController {
     });
 
     return { accessToken, user };
+  }
+
+  @Post('refresh')
+  @ApiOperation({
+    summary:
+      'Rotate tokens: issues a new access + refresh token and bumps the token version',
+  })
+  @ApiResponse({ status: 200, description: 'Returns a new access token' })
+  @UseGuards(RefreshTokenGuard)
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshUser = req.user as { id: string; role: string };
+    const { accessToken, refreshToken } = await this.authService.refresh(
+      refreshUser.id,
+      refreshUser.role as UserRole,
+    );
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+    return { accessToken };
+  }
+
+  @Post('logout')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Invalidate all tokens by bumping the token version',
+  })
+  @UseGuards(JwtAuthGuard)
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const user = req.user as { sub: string };
+    const result = await this.authService.logout(user.sub);
+    res.clearCookie('refresh_token', { path: '/' });
+    return result;
   }
 
   @ApiBearerAuth()

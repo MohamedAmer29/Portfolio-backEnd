@@ -7,7 +7,11 @@ import { EmailModule } from '../email/email.module';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ContactMessage]), EmailModule, AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([ContactMessage]),
+    EmailModule,
+    AuthModule,
+  ],
   controllers: [ContactController],
   providers: [ContactService],
 })

@@ -10,7 +10,7 @@ import { AuthService } from './auth.service';
 export class JwtAuthGuard implements CanActivate {
   constructor(private readonly authService: AuthService) {}
 
-  canActivate(ctx: ExecutionContext): boolean {
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest<{
       headers: Record<string, string | undefined>;
       user?: unknown;
@@ -18,7 +18,7 @@ export class JwtAuthGuard implements CanActivate {
     const auth = req.headers.authorization;
     const token = auth?.startsWith('Bearer ') ? auth.slice(7) : undefined;
     if (!token) throw new UnauthorizedException();
-    req.user = this.authService.verifyToken(token);
+    req.user = await this.authService.verifyToken(token);
     return true;
   }
 }
