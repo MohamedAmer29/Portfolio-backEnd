@@ -12,28 +12,29 @@ import {
 } from 'class-validator';
 import { EmploymentType } from '../../shared/portfolio.enums';
 
-export class CreateExperienceDto {
-  @ApiProperty({ example: 'Acme Corp', description: 'Company name' })
+export class UpdateExperienceDto {
+  @ApiProperty({ example: 'Acme Corp', required: false, description: 'Company name' })
+  @IsOptional()
   @IsString()
   @MaxLength(180)
-  company!: string;
+  company?: string;
 
-  @ApiProperty({ example: 'Senior Backend Engineer' })
+  @ApiProperty({ example: 'Senior Backend Engineer', required: false })
+  @IsOptional()
   @IsString()
   @MaxLength(180)
-  position!: string;
+  position?: string;
 
   @ApiProperty({
     type: [String],
-    example: [
-      'Led the migration to a microservices architecture.',
-      'Mentored a team of 4 junior engineers.',
-    ],
+    example: ['Led the migration to a microservices architecture.'],
+    required: false,
     description: 'List of responsibilities and achievements',
   })
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  description!: string[];
+  description?: string[];
 
   @ApiProperty({ example: 'Remote', required: false })
   @IsOptional()
@@ -49,9 +50,10 @@ export class CreateExperienceDto {
   @IsEnum(EmploymentType)
   employmentType?: EmploymentType;
 
-  @ApiProperty({ example: '2022-03-01', description: 'Start date (ISO 8601)' })
+  @ApiProperty({ example: '2022-03-01', required: false, description: 'Start date (ISO 8601)' })
+  @IsOptional()
   @IsDateString()
-  startDate!: string;
+  startDate?: string;
 
   @ApiProperty({ example: '2024-03-01', required: false })
   @IsOptional()

@@ -12,19 +12,22 @@ import {
 } from 'class-validator';
 import { SkillCategory } from '../../shared/portfolio.enums';
 
-export class CreateSkillDto {
-  @ApiProperty({ example: 'NestJS', description: 'Name of the skill' })
+export class UpdateSkillDto {
+  @ApiProperty({ example: 'NestJS', required: false, description: 'Name of the skill' })
+  @IsOptional()
   @IsString()
   @MaxLength(120)
-  name!: string;
+  name?: string;
 
   @ApiProperty({
     enum: SkillCategory,
     example: SkillCategory.BACKEND,
+    required: false,
     description: 'Category the skill belongs to',
   })
+  @IsOptional()
   @IsEnum(SkillCategory)
-  category!: SkillCategory;
+  category?: SkillCategory;
 
   @ApiProperty({
     example: 80,

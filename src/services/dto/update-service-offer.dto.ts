@@ -11,27 +11,19 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ServiceGroupDto } from './create-service-offer.dto';
 
-export class ServiceGroupDto {
-  @ApiProperty({ example: 'Frontend' })
-  @IsString()
-  label!: string;
-
-  @ApiProperty({ type: [String], example: ['React', 'TypeScript'] })
-  @IsArray()
-  @IsString({ each: true })
-  items!: string[];
-}
-
-export class CreateServiceOfferDto {
-  @ApiProperty({ example: 'Backend Development' })
+export class UpdateServiceOfferDto {
+  @ApiProperty({ example: 'Backend Development', required: false })
+  @IsOptional()
   @IsString()
   @MaxLength(180)
-  title!: string;
+  title?: string;
 
-  @ApiProperty({ example: 'I build scalable REST and GraphQL APIs...' })
+  @ApiProperty({ example: 'I build scalable REST and GraphQL APIs...', required: false })
+  @IsOptional()
   @IsString()
-  description!: string;
+  description?: string;
 
   @ApiProperty({ example: 'server-icon', required: false })
   @IsOptional()

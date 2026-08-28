@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import pg from 'pg';
 import { Profile } from '../profile/entities/profile.entity';
+import { AboutMe } from '../about-me/entities/about-me.entity';
 import { Skill } from '../skills/entities/skill.entity';
 import { Project } from '../projects/entities/project.entity';
 import { Technology } from '../technologies/entities/technology.entity';
@@ -68,6 +69,7 @@ import { User } from '../users/entities/user.entity';
             Profile,
             Skill,
             Project,
+            AboutMe,
             Technology,
             Experience,
             Education,

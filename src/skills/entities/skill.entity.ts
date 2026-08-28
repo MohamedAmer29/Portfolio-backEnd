@@ -19,6 +19,8 @@ export class Skill extends BaseEntityColumns {
   icon?: string;
   @Column('text', { nullable: true })
   description?: string;
+  @Column('text', { array: true, nullable: true })
+  related?: string[];
   @Index()
   @Column({ type: 'int', default: 0 })
   displayOrder!: number;

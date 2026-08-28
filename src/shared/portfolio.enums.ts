@@ -3,6 +3,7 @@ export enum SkillCategory {
   BACKEND = 'Backend',
   DATABASE = 'Database',
   DEVOPS = 'DevOps',
+  AI = 'ai',
   TOOLS = 'Tools',
   OTHER = 'Other',
 }

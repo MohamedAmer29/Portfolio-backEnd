@@ -10,8 +10,8 @@ export class Experience extends BaseEntityColumns {
   company!: string;
   @Column({ length: 180 })
   position!: string;
-  @Column('text')
-  description!: string;
+  @Column('text', { array: true, nullable: true })
+  description?: string[];
   @Column({ nullable: true })
   location?: string;
   @Column({

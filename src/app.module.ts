@@ -7,6 +7,7 @@ import { DatabaseModule } from './database/database.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { appConfig } from './config/app.config';
 import { ProfileModule } from './profile/profile.module';
+import { AboutMeModule } from './about-me/about-me.module';
 import { SkillsModule } from './skills/skills.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TechnologiesModule } from './technologies/technologies.module';
@@ -21,6 +22,7 @@ import { RedisModule } from './redis/redis.module';
 import { EmailModule } from './email/email.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -33,6 +35,7 @@ import { AuthModule } from './auth/auth.module';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 10 }]),
     DatabaseModule,
     ProfileModule,
+    AboutMeModule,
     SkillsModule,
     ProjectsModule,
     TechnologiesModule,
@@ -47,6 +50,7 @@ import { AuthModule } from './auth/auth.module';
     EmailModule,
     HealthModule,
     AuthModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

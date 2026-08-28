@@ -11,6 +11,8 @@ export class Profile extends BaseEntityColumns {
   headline!: string;
   @Column('text')
   bio!: string;
+  @Column('text', { nullable: true })
+  description?: string;
   @Column('text')
   shortBio!: string;
   @Column({ nullable: true })

@@ -10,16 +10,18 @@ import {
   Min,
 } from 'class-validator';
 
-export class CreateEducationDto {
-  @ApiProperty({ example: 'University of Example' })
+export class UpdateEducationDto {
+  @ApiProperty({ example: 'University of Example', required: false })
+  @IsOptional()
   @IsString()
   @MaxLength(180)
-  institution!: string;
+  institution?: string;
 
-  @ApiProperty({ example: 'B.Sc. Computer Science' })
+  @ApiProperty({ example: 'B.Sc. Computer Science', required: false })
+  @IsOptional()
   @IsString()
   @MaxLength(180)
-  degree!: string;
+  degree?: string;
 
   @ApiProperty({ example: 'Software Engineering', required: false })
   @IsOptional()

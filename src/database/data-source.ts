@@ -8,6 +8,7 @@ import { Project } from '../projects/entities/project.entity';
 import { Technology } from '../technologies/entities/technology.entity';
 import { Experience } from '../experience/entities/experience.entity';
 import { Education } from '../education/entities/education.entity';
+import { AboutMe } from '../about-me/entities/about-me.entity';
 import { Certification } from '../certifications/entities/certification.entity';
 import { SocialLink } from '../social-links/entities/social-link.entity';
 import { ServiceOffer } from '../services/entities/service.entity';
@@ -55,6 +56,7 @@ export default new DataSource({
     Technology,
     Experience,
     Education,
+    AboutMe,
     Certification,
     SocialLink,
     ServiceOffer,

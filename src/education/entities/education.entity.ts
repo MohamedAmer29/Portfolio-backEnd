@@ -13,11 +13,17 @@ export class Education extends BaseEntityColumns {
   fieldOfStudy?: string;
   @Column('text', { nullable: true })
   description?: string;
+  @Column('text', { array: true, nullable: true })
+  coursework?: string[];
+  @Column('text', { array: true, nullable: true })
+  achievements?: string[];
+  @Column('text', { array: true, nullable: true })
+  academicFocus?: string[];
   @Column({ nullable: true })
   location?: string;
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   startDate?: string;
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   endDate?: string;
   @Column({ default: false })
   isCurrent!: boolean;

@@ -75,31 +75,55 @@ async function seed() {
     (await techRepo.save(
       techRepo.create({ name: 'NestJS', category: 'Backend' }),
     ));
-  const project = await projectRepo.save(
-    projectRepo.create({
-      title: 'Portfolio Platform',
-      slug: 'portfolio-platform',
-      shortDescription: 'Developer portfolio',
-      description: 'A clean portfolio.',
-      status: ProjectStatus.IN_PROGRESS,
-      featured: true,
-      displayOrder: 1,
-      technologies: [react, nest],
-    }),
-  );
+  const project =
+    (await projectRepo.findOneBy({ slug: 'portfolio-platform' })) ??
+    (await projectRepo.save(
+      projectRepo.create({
+        title: 'Portfolio Platform',
+        slug: 'portfolio-platform',
+        shortDescription: 'Developer portfolio',
+        description: 'A clean portfolio.',
+        status: ProjectStatus.IN_PROGRESS,
+        featured: true,
+        displayOrder: 1,
+        technologies: [react, nest],
+      }),
+    ));
   await expRepo.save({
     company: 'Example Co',
     position: 'Software Engineer',
-    description: 'Built web apps.',
+    description: ['Built web apps.'],
     employmentType: EmploymentType.FULL_TIME,
     startDate: '2024-01-01',
     isCurrent: true,
     displayOrder: 1,
   });
   await eduRepo.save({
-    institution: 'Example University',
-    degree: 'BSc Computer Science',
+    institution: 'University Name',
+    degree: "Bachelor's Degree",
     fieldOfStudy: 'Computer Science',
+    startDate: '2022',
+    endDate: '2026',
+    location: 'City, Country',
+    description:
+      'Studying computer science with a focus on software engineering, algorithms, and web development.',
+    coursework: [
+      'Software Engineering',
+      'Database Systems',
+      'Algorithms & Data Structures',
+      'Web Development',
+      'Computer Networks',
+      'Artificial Intelligence',
+    ],
+    achievements: [],
+    academicFocus: [
+      'Software Engineering',
+      'Database Systems',
+      'Algorithms',
+      'Web Development',
+      'Computer Networks',
+      'Artificial Intelligence',
+    ],
     isCurrent: false,
     displayOrder: 1,
   });
@@ -115,12 +139,35 @@ async function seed() {
     displayOrder: 1,
     isVisible: true,
   });
-  await serviceRepo.save({
+  const existingService =
+    (await serviceRepo.findOne({
+      where: { title: 'Full Stack Development' },
+    })) ?? serviceRepo.create();
+  Object.assign(existingService, {
     title: 'Full Stack Development',
-    description: 'Web application development.',
+    description:
+      'I build complete web applications from intuitive, accessible interfaces to scalable APIs, databases, and deployment pipelines.',
+    icon: 'Layers',
+    number: '01',
+    category: 'Full Stack',
+    color: '#456e6e',
+    emphasis: 'detail',
+    technologies: ['React', 'TypeScript', 'Node.js', 'NestJS', 'PostgreSQL'],
+    groups: [
+      { label: 'Frontend', items: ['React', 'TypeScript', 'Tailwind CSS'] },
+      { label: 'Backend', items: ['Node.js', 'NestJS', 'Express'] },
+      { label: 'Database', items: ['PostgreSQL', 'MongoDB', 'TypeORM'] },
+      { label: 'DevOps', items: ['Docker', 'Redis', 'CI/CD'] },
+    ],
+    highlights: [
+      'End-to-end delivery: UI, API, domain logic, and data layer.',
+      'Clean architecture that stays maintainable as the product grows.',
+      'Performance-focused builds with accessibility built in from the start.',
+    ],
     displayOrder: 1,
     isFeatured: true,
   });
+  await serviceRepo.save(existingService);
 
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;

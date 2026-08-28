@@ -16,6 +16,14 @@ export class CreateProfileDto {
   @IsString()
   bio!: string;
 
+  @ApiProperty({
+    example: 'A longer description of who I am and what I do.',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
   @ApiProperty({ example: 'Builder of things.' })
   @IsString()
   shortBio!: string;
