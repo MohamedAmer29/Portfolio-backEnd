@@ -10,7 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { AnyFileInterceptor } from '../common/interceptors/any-file.interceptor';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -68,7 +68,7 @@ export class AboutMeController {
     schema: {
       type: 'object',
       properties: {
-        image: {
+        file: {
           type: 'string',
           format: 'binary',
           description: 'Image file to upload (max ~10MB)',
@@ -77,7 +77,7 @@ export class AboutMeController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(AnyFileInterceptor)
   async uploadImage(@UploadedFile() file: ImageFile) {
     if (!file) {
       throw new BadRequestException('Image file is required');
@@ -97,7 +97,7 @@ export class AboutMeController {
     schema: {
       type: 'object',
       properties: {
-        image: {
+        file: {
           type: 'string',
           format: 'binary',
           description: 'New image file to upload (max ~10MB)',
@@ -106,7 +106,7 @@ export class AboutMeController {
     },
   })
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(AnyFileInterceptor)
   async updateImage(@UploadedFile() file: ImageFile) {
     if (!file) {
       throw new BadRequestException('Image file is required');

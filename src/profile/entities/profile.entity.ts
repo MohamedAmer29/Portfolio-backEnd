@@ -7,20 +7,20 @@ export class Profile extends BaseEntityColumns {
   id!: string;
   @Column({ length: 150 })
   fullName!: string;
-  @Column({ length: 200 })
-  headline!: string;
+  @Column({ length: 200, nullable: true })
+  headline?: string;
   @Column('text')
   bio!: string;
   @Column('text', { nullable: true })
   description?: string;
-  @Column('text')
-  shortBio!: string;
+  @Column('text', { nullable: true })
+  shortBio?: string;
   @Column({ nullable: true })
   profileImage?: string;
   @Column({ nullable: true, length: 120 })
   location?: string;
-  @Column({ unique: true, length: 180 })
-  email!: string;
+  @Column({ unique: true, length: 180, nullable: true })
+  email?: string;
   @Column({ nullable: true, length: 40 })
   phone?: string;
   @Column({ nullable: true })

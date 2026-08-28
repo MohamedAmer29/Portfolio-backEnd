@@ -67,16 +67,16 @@ export class AuthController {
   }
 
   @Post('logout')
-  @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Invalidate all tokens by bumping the token version',
+    summary:
+      'Invalidate the session by clearing cookies and bumping the token version',
   })
-  @UseGuards(JwtAuthGuard)
+  @ApiResponse({ status: 201, description: 'Logged out' })
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const user = req.user as { sub: string };
-    const result = await this.authService.logout(user.sub);
+    const refreshToken = req.cookies?.['refresh_token'];
+    res.clearCookie('access_token', { path: '/' });
     res.clearCookie('refresh_token', { path: '/' });
-    return result;
+    return this.authService.logout(refreshToken);
   }
 
   @ApiBearerAuth()

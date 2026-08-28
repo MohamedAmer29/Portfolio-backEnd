@@ -20,6 +20,30 @@ export class ProjectsService {
     private readonly technologies: Repository<Technology>,
   ) {}
 
+  private slugify(input: string): string {
+    const slug = input
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 210);
+    return slug || 'project';
+  }
+
+  private async ensureUniqueSlug(base: string, excludeId?: string): Promise<string> {
+    const slug = this.slugify(base);
+    let candidate = slug;
+    let n = 1;
+    for (;;) {
+      const existing = await this.repo.findOneBy({ slug: candidate });
+      if (!existing || existing.id === excludeId) {
+        return candidate;
+      }
+      candidate = `${slug}-${n++}`;
+    }
+  }
+
   private mapProject(p: Project): ProjectResponse {
     const tech = (p.technologies ?? []).map((t) =>
       typeof t === 'string' ? t : (t?.name ?? ''),
@@ -40,8 +64,9 @@ export class ProjectsService {
   }
 
   async create(data: CreateProjectDto): Promise<ProjectResponse> {
+    const slug = await this.ensureUniqueSlug(data.slug || data.title);
     const saved = await this.repo.save(
-      this.repo.create(data as unknown as Record<string, unknown>),
+      this.repo.create({ ...data, slug } as unknown as Record<string, unknown>),
     );
     const reloaded = await this.repo.findOne({ where: { id: saved.id } });
     return this.mapProject(reloaded!);
@@ -53,7 +78,9 @@ export class ProjectsService {
       throw new NotFoundException('Project not found');
     }
     if (data.title !== undefined) project.title = data.title;
-    if (data.slug !== undefined) project.slug = data.slug;
+    if (data.slug !== undefined) {
+      project.slug = await this.ensureUniqueSlug(data.slug, id);
+    }
     if (data.shortDescription !== undefined)
       project.shortDescription = data.shortDescription;
     if (data.description !== undefined) project.description = data.description;

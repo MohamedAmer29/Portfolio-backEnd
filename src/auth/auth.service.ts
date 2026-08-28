@@ -59,15 +59,6 @@ export class AuthService {
     ) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    if (
-      user.currentRefreshTokenExpiresAt &&
-      user.currentRefreshTokenExpiresAt.getTime() > Date.now()
-    ) {
-      throw new ForbiddenException(
-        'Already logged in. Please logout before logging in again.',
-      );
-    }
-
     const sessionId = randomBytes(16).toString('hex');
     user.currentRefreshTokenId = sessionId;
     user.currentRefreshTokenExpiresAt = new Date(
@@ -223,14 +214,16 @@ export class AuthService {
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Account is not active');
     }
-    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
 
-    const sessionId = randomBytes(16).toString('hex');
-    user.currentRefreshTokenId = sessionId;
-    user.currentRefreshTokenExpiresAt = new Date(
-      Date.now() + 7 * 24 * 60 * 60 * 1000,
-    );
-    await this.users.save(user);
+    const sessionId =
+      user.currentRefreshTokenId ?? randomBytes(16).toString('hex');
+    if (!user.currentRefreshTokenId) {
+      user.currentRefreshTokenId = sessionId;
+      user.currentRefreshTokenExpiresAt = new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000,
+      );
+      await this.users.save(user);
+    }
 
     const accessToken = this.signToken(
       {
@@ -256,9 +249,20 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async logout(userId: string): Promise<{ success: boolean }> {
-    const user = await this.users.findOneBy({ id: userId });
-    if (!user) throw new UnauthorizedException();
+  async logout(refreshToken?: string): Promise<{ success: boolean }> {
+    if (!refreshToken) {
+      throw new ForbiddenException('Not logged in. Please log in again.');
+    }
+    let payload: { sub: string; tokenVersion: number } | undefined;
+    try {
+      payload = await this.verifyRefreshToken(refreshToken);
+    } catch {
+      throw new ForbiddenException('Not logged in. Please log in again.');
+    }
+    const user = await this.users.findOneBy({ id: payload.sub });
+    if (!user || !user.isActive) {
+      throw new ForbiddenException('Not logged in. Please log in again.');
+    }
     user.tokenVersion = (user.tokenVersion ?? 0) + 1;
     user.currentRefreshTokenId = null;
     user.currentRefreshTokenExpiresAt = null;

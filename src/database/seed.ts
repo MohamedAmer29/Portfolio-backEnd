@@ -139,11 +139,8 @@ async function seed() {
     displayOrder: 1,
     isVisible: true,
   });
-  const existingService =
-    (await serviceRepo.findOne({
-      where: { title: 'Full Stack Development' },
-    })) ?? serviceRepo.create();
-  Object.assign(existingService, {
+  await serviceRepo.createQueryBuilder().delete().execute();
+  const service = serviceRepo.create({
     title: 'Full Stack Development',
     description:
       'I build complete web applications from intuitive, accessible interfaces to scalable APIs, databases, and deployment pipelines.',
@@ -167,7 +164,7 @@ async function seed() {
     displayOrder: 1,
     isFeatured: true,
   });
-  await serviceRepo.save(existingService);
+  await serviceRepo.save(service);
 
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
