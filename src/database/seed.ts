@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { config } from 'dotenv';
 import dataSource from './data-source';
+import { skillSeeds } from './skills-seed';
 import { Profile } from '../profile/entities/profile.entity';
 import { Skill } from '../skills/entities/skill.entity';
 import { Project } from '../projects/entities/project.entity';
@@ -12,7 +13,6 @@ import { SocialLink } from '../social-links/entities/social-link.entity';
 import { ServiceOffer } from '../services/entities/service.entity';
 import { User, UserRole } from '../users/entities/user.entity';
 import {
-  SkillCategory,
   ProjectStatus,
   EmploymentType,
 } from '../shared/portfolio.enums';
@@ -47,37 +47,119 @@ async function seed() {
     });
   await profileRepo.save(profile);
 
-  await skillRepo.save([
-    {
-      name: 'React',
-      category: SkillCategory.FRONTEND,
-      proficiency: 90,
-      yearsOfExperience: 4,
-      displayOrder: 1,
-      isFeatured: true,
-    },
-    {
-      name: 'NestJS',
-      category: SkillCategory.BACKEND,
-      proficiency: 88,
-      yearsOfExperience: 3,
-      displayOrder: 2,
-      isFeatured: true,
-    },
-  ]);
-  const react =
-    (await techRepo.findOneBy({ name: 'React' })) ??
-    (await techRepo.save(
-      techRepo.create({ name: 'React', category: 'Frontend' }),
-    ));
-  const nest =
-    (await techRepo.findOneBy({ name: 'NestJS' })) ??
-    (await techRepo.save(
-      techRepo.create({ name: 'NestJS', category: 'Backend' }),
-    ));
-  const project =
-    (await projectRepo.findOneBy({ slug: 'portfolio-platform' })) ??
-    (await projectRepo.save(
+  await skillRepo.createQueryBuilder().delete().execute();
+  await skillRepo.save(skillRepo.create(skillSeeds));
+
+  // ── delete ALL existing technologies and insert the new 33 ───────────────
+  await techRepo.query('DELETE FROM "technologies"');
+
+  // ── 33 new technologies, exactly the list provided ──────────────────────
+  const frontend = [
+    'React',
+    'TypeScript',
+    'JavaScript',
+    'HTML5',
+    'CSS3',
+    'Tailwind CSS',
+    'Redux Toolkit',
+    'TanStack Query',
+    'React Hook Form',
+    'Three.js',
+    'React Three Fiber',
+  ];
+  const backend = [
+    'Node.js',
+    'Express.js',
+    'NestJS',
+    'REST APIs',
+    'JWT Authentication',
+    'WebSockets / Real-Time Applications',
+  ];
+  const databases = [
+    'PostgreSQL',
+    'MongoDB',
+    'MySQL',
+    'TypeORM',
+    'Redis',
+    'Firebase',
+  ];
+  const devops = [
+    'Docker',
+    'Git',
+    'GitHub',
+    'Postman',
+    'Linux',
+    'Vite',
+  ];
+  const other = [
+    'Python',
+    'OpenCV',
+    'MediaPipe',
+    'AI / Machine Learning',
+  ];
+
+  const allTechNames = [...frontend, ...backend, ...databases, ...devops, ...other];
+  const categoryMap: Record<string, string> = {
+    React: 'Frontend',
+    TypeScript: 'Frontend',
+    JavaScript: 'Frontend',
+    HTML5: 'Frontend',
+    CSS3: 'Frontend',
+    'Tailwind CSS': 'Frontend',
+    'Redux Toolkit': 'Frontend',
+    'TanStack Query': 'Frontend',
+    'React Hook Form': 'Frontend',
+    'Three.js': 'Frontend',
+    'React Three Fiber': 'Frontend',
+    'Node.js': 'Backend',
+    'Express.js': 'Backend',
+    NestJS: 'Backend',
+    'REST APIs': 'Backend',
+    'JWT Authentication': 'Backend',
+    'WebSockets / Real-Time Applications': 'Backend',
+    PostgreSQL: 'Databases & Storage',
+    MongoDB: 'Databases & Storage',
+    MySQL: 'Databases & Storage',
+    TypeORM: 'Databases & Storage',
+    Redis: 'Databases & Storage',
+    Firebase: 'Databases & Storage',
+    Docker: 'DevOps & Tools',
+    Git: 'DevOps & Tools',
+    GitHub: 'DevOps & Tools',
+    Postman: 'DevOps & Tools',
+    Linux: 'DevOps & Tools',
+    Vite: 'DevOps & Tools',
+    Python: 'Other',
+    OpenCV: 'Other',
+    'MediaPipe': 'Other',
+    'AI / Machine Learning': 'Other',
+  };
+
+  const slugify = (s: string) =>
+    s.toString().toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'tech';
+
+  const techData = allTechNames.map((name) => {
+    const cat = categoryMap[name];
+    const icon = `${name.toLowerCase().replace(/ /g, '-')}-icon`;
+    return techRepo.create({ name, category: cat, icon });
+  });
+
+  await techRepo.save(techData);
+
+  // ── update the 'portfolio-platform' project techs ──────────────────────
+  const projTechFirst = await techRepo.findOneBy({ name: 'React' });
+  const projTechSecond = await techRepo.findOneBy({ name: 'TypeScript' });
+  const projTechIds2 = projTechFirst && projTechSecond
+    ? [projTechFirst, projTechSecond].filter((t): t is Technology => t !== null)
+    : [];
+  const existingProject = await projectRepo.findOneBy({ slug: 'portfolio-platform' });
+  let project: Project;
+  if (existingProject) {
+    project = existingProject;
+    if (projTechIds2.length > 0) project.technologies = projTechIds2;
+    await projectRepo.save(project);
+  } else {
+    project = await projectRepo.save(
       projectRepo.create({
         title: 'Portfolio Platform',
         slug: 'portfolio-platform',
@@ -86,9 +168,18 @@ async function seed() {
         status: ProjectStatus.IN_PROGRESS,
         featured: true,
         displayOrder: 1,
-        technologies: [react, nest],
+        technologies: projTechIds2 as Technology[],
       }),
-    ));
+    );
+  }
+
+  // ── update the service offer technologies snapshot ─────────────────────
+  const existingService = await serviceRepo.findOneBy({ title: 'Full Stack Development' });
+  if (existingService) {
+    existingService.technologies = allTechNames.slice(0, 5);
+    await serviceRepo.save(existingService);
+  }
+
   await expRepo.save({
     company: 'Example Co',
     position: 'Software Engineer',
